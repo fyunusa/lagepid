@@ -1,0 +1,10 @@
+name: Business Rules - Flag Integration
+type: module
+description: Provide token extension for working with flagged entity.
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: Workflow
+
+dependencies:
+  - business_rules:business_rules
+  - flag:flag

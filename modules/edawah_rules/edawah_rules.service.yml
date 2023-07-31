@@ -1,0 +1,6 @@
+services:
+  edawah_rules.action_container_form:
+    class: Drupal\edawah_rules\Form\Expression\CustomActionContainerForm
+    arguments: ['@rules.action_expression_container']
+    tags:
+      - { name: form_type, form_id: rules_expression_container_form }
