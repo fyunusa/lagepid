@@ -2,9 +2,4 @@ name: Migrate
 type: module
 description: 'Handles migrations'
 package: Migration
-# version: VERSION
-
-# Information added by Drupal.org packaging script on 2023-07-05
-version: '9.5.10'
-project: 'drupal'
-datestamp: 1688551056
+version: VERSION

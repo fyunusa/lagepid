@@ -2,7 +2,5 @@ name: 'Edawah Rules'
 type: module
 description: 'Extends the Rules module with custom actions and conditions.'
 package: Custom
-dependencies:
-  - rules:rules
 core_version_requirement: ^8 || ^9
 version: '1.0'

@@ -1,82 +1,94 @@
 <?php
 
-// namespace Drupal\edawah_rules\EventSubscriber;
+namespace Drupal\edawah_rules\EventSubscriber;
 
-// use Drupal\Core\Form\FormStateInterface;
-// use Drupal\Core\Routing\RouteMatchInterface;
-// use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-// use Symfony\Component\HttpKernel\KernelEvents;
-// use Symfony\Component\HttpKernel\Event\RequestEvent;
-
-// /**
-//  * Event subscriber to alter the rules action form.
-//  */
-// class RulesFormAlter implements EventSubscriberInterface
-// {
-
-//   /**
-//    * {@inheritdoc}
-//    */
-//   public static function getSubscribedEvents()
-//   {
-//     $events[KernelEvents::REQUEST][] = ['onRequest'];
-//     return $events;
-//   }
-
-//   /**
-//    * Alter the rules action form.
-//    */
-//   public function onRequest(RequestEvent $event)
-//   {
-//     $request = $event->getRequest();
-//     $route_name = $request->attributes->get('_route');
-//     if ($route_name === 'entity.rules_reaction_rule.edit_form') {
-//       $form = $event->getRequest()->request->get('form');
-//       $this->alterActionForm($form);
-//     }
-//   }
-
-//   /**
-//    * Alter the rules action form to add the "Add Action" button.
-//    */
-//   protected function alterActionForm(array &$form)
-//   {
-//     $form['actions']['add_action'] = [
-//       '#type' => 'submit',
-//       '#value' => t('Add Action'),
-//       '#submit' => ['::addAction'],
-//       '#ajax' => [
-//         'callback' => '::addActionAjaxCallback',
-//         'wrapper' => 'actions-container',
-//       ],
-//     ];
-//   }
-
-//   /**
-//    * Custom submit handler for the "Add Action" button.
-//    */
-//   public function addAction(array &$form, FormStateInterface $form_state)
-//   {
-//     $actions = $form_state->getValue('actions');
-//     $actions[] = [
-//       'action_id' => 'rules_if_container',
-//       'context_mapping' => [],
-//     ];
-//     $form_state->setValue('actions', $actions);
-//     $form_state->setRebuild(TRUE);
-//   }
-
-//   /**
-//    * Ajax callback for adding a new nested action.
-//    */
-//   public function addActionAjaxCallback(array &$form, FormStateInterface $form_state)
-//   {
-//     return $form['actions'];
-//   }
-// }
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Drupal\edawah_rules\Plugin\RulesAction\RulesIfActionsContainer;
 
 
-//-----------------------------------Begin old code-------------------------------//
+
+/**
+ * Event subscriber to alter the rules action form.
+ */
+class RulesFormAlter implements EventSubscriberInterface
+{
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        $events[KernelEvents::REQUEST][] = ['onRequest'];
+        return $events;
+    }
+
+    /**
+     * Alter the rules action form.
+     */
+    public function onRequest(RequestEvent $event)
+    {
+        $request = $event->getRequest();
+        $route_name = $request->attributes->get('_route');
+        if ($route_name === 'entity.rules_reaction_rule.edit_form') {
+            $form = $event->getRequest()->request->get('form');
+            $this->alterActionForm($form);
+        }
+    }
+
+    /**
+     * Implements hook_entity_type_build().
+     */
+    function edawah_rules_entity_type_build(array &$entity_types)
+    {
+        // Register the custom context class for autoloading.
+        $entity_types['rules_action']['class'][] = 'Drupal\edawah_rules\Plugin\RulesAction\RulesIfActionsContainer';
+    }
+
+    /**
+     * Alter the rules action form to add the "Add Action" button.
+     */
+    protected function alterActionForm(array &$form)
+    {
+        $form['actions']['add_action'] = [
+            '#type' => 'submit',
+            '#value' => t('Add Action'),
+            '#submit' => ['::addAction'],
+            '#ajax' => [
+                'callback' => '::addActionAjaxCallback',
+                'wrapper' => 'actions-container',
+            ],
+        ];
+    }
+
+    /**
+     * Custom submit handler for the "Add Action" button.
+     */
+    public function addAction(array &$form, FormStateInterface $form_state)
+    {
+        $actions = $form_state->getValue('actions');
+        $actions[] = [
+            'action_id' => 'rules_if_container',
+            'context_mapping' => [],
+        ];
+        $form_state->setValue('actions', $actions);
+        $form_state->setRebuild(TRUE);
+    }
+
+    /**
+     * Ajax callback for adding a new nested action.
+     */
+    public function addActionAjaxCallback(array &$form, FormStateInterface $form_state)
+    {
+        return $form['actions'];
+    }
+}
+
+
+// -----------------------------------Begin old code-------------------------------//
 
 // namespace Drupal\edawah_rules\EventSubscriber;
 
