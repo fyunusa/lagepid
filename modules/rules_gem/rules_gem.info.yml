@@ -1,0 +1,8 @@
+name: 'Rules Gem'
+type: module
+description: 'Provides a custom IF Action with nested actions for Rules.'
+core_version_requirement: ^8 || ^9
+package: Custom
+version: 1.0
+dependencies:
+  - rules:rules

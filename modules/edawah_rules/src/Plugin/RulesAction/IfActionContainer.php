@@ -1,5 +1,21 @@
 <?php
 
+namespace Drupal\edawah_rules\Plugin\RulesAction;
+
+use Drupal\edawah_rules\Form\Expression\EdawahActionForm;
+use Drupal\edawah_rules\Form\Expression\EdawahActionContainerForm;
+use Drupal\edawah_rules\Form\IfActionContainerForm;
+use Drupal\rules\Core\RulesActionInterface;
+use Drupal\rules\Plugin\RulesExpression\RulesAction;
+use Drupal\rules\Core\RulesActionBase;
+use Drupal\rules\Core\RulesConditionBase;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
+
+use Psr\Log\LoggerInterface;
+
+
+
 /**
  * Provides an 'IF' action container that executes nested actions based on a condition.
  *
@@ -24,47 +40,111 @@
  *       description = @Translation("Specifies variable 2 for the IF condition."),
  *       required = TRUE,
  *     ),
- *     "actions" = @ContextDefinition("list:business_rules_action",
- *       label = @Translation("Actions"),
- *       description = @Translation("The list of nested actions inside the IF container."),
- *       required = FALSE,
- *     ),
  *   }
  * )
  */
-class IfActionContainer extends RulesActionBase
+class IfActionContainer extends RulesConditionBase implements RulesActionInterface
 {
+
+    protected $subactions = [];
+    protected $logger;
 
     /**
      * {@inheritdoc}
      */
-    public function execute()
+    public function autoSaveContext()
     {
-        // Get the values of the context variables for the condition evaluation.
+        // Per default no context parameters will be auto saved.
+        return [];
+        // $this->logger->notice('Valid condition: @valid_condition', ['@valid_condition' => 'autosavecontext executed']);
+        \Drupal::logger('ifActionContainer')->notice('autosavecontext executed');
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function doExecute()
+    {
+        \Drupal::logger('ifActionContainer')->notice('doExecute executed');
+
+        $valid_condition = $this->compare_variables();
+        if ($valid_condition) {
+            $this->executeNestedActions();
+        }
+    }
+
+    /**
+     * Show the custom form for nested actions when condition is met.
+     */
+    protected function showIfActionContainerForm()
+    {
+
+        $this->logger->info('Valid condition: @valid_condition', ['@valid_condition' => 'showIfActionContainerForm executed']);
+
+        // Create an instance of the IfActionContainerForm.
+        $form_object = new IfActionContainerForm($this, \Drupal::formBuilder(), \Drupal::entityManager());
+
+        // Display the form.
+        return $form_object->getForm();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function compare_variables()
+    {
+
+        // Get the values of the context variables.
         $variable_1 = $this->getContextValue('variable_1');
         $operator = $this->getContextValue('operator');
         $variable_2 = $this->getContextValue('variable_2');
 
-        // Perform the condition evaluation based on the operator.
-        $condition_result = FALSE;
+        // Perform the desired actions based on the values of the context variables.
+        // For example:
         if ($operator === '<' && $variable_1 < $variable_2) {
-            $condition_result = TRUE;
+            return $variable_1 < $variable_2;
         } elseif ($operator === '>' && $variable_1 > $variable_2) {
-            $condition_result = TRUE;
+            return $variable_1 > $variable_2;
         } elseif ($operator === '==' && $variable_1 === $variable_2) {
-            $condition_result = TRUE;
+            return $variable_1 === $variable_2;
         } elseif ($operator === '!=' && $variable_1 !== $variable_2) {
-            $condition_result = TRUE;
+            return $variable_1 !== $variable_2;
         }
+    }
 
-        // If the condition is satisfied, execute the nested actions.
-        if ($condition_result) {
-            $nested_actions = $this->getContextValue('actions');
-            if (is_array($nested_actions)) {
-                foreach ($nested_actions as $action) {
-                    // Execute the nested action.
-                    $action->execute();
-                }
+    /**
+     * Adds a nested action to the container.
+     */
+    public function addSubaction(RulesActionInterface $action)
+    {
+        $this->subactions[] = $action;
+    }
+
+    /**
+     * Executes nested actions.
+     */
+    protected function executeNestedActions()
+    {
+        // Execute each nested action.
+        foreach ($this->subactions as $action) {
+            // Check if the nested action is an IfActionContainer.
+            if ($action instanceof IfActionContainer) {
+                // Use the EdawahActionContainerForm to execute the nested actions.
+                // $form_object = new EdawahActionContainerForm($action, \Drupal::formBuilder(), \Drupal::entityManager());
+                $form_object = new IfActionContainerForm($this, \Drupal::formBuilder(), \Drupal::entityManager());
+                $form_object->submitForm([], $form_object);
+
+                echo json_encode('i see form object');
+                echo json_encode($form_object);
+            } else {
+                // Use the EdawahActionForm to execute the nested actions.
+                // $form_object = new EdawahActionForm($action, \Drupal::formBuilder(), \Drupal::entityManager());
+                $form_object = new IfActionContainerForm($this, \Drupal::formBuilder(), \Drupal::entityManager());
+                $form_object->submitForm([], $form_object);
+
+                echo json_encode('i see form object');
+                echo json_encode($form_object);
             }
         }
     }
@@ -72,106 +152,13 @@ class IfActionContainer extends RulesActionBase
     /**
      * {@inheritdoc}
      */
-    public function buildConfigurationForm(array $form, FormStateInterface $form_state)
+    public function access($object, AccountInterface $account = NULL, $return_as_object = FALSE)
     {
-        // Render form elements for the condition settings (variable_1, operator, variable_2).
-        // ...
 
-        // Render form elements for the nested actions.
-        $form['actions'] = [
-            '#type' => 'container',
-            '#tree' => TRUE,
-            '#prefix' => '<div id="actions-container">',
-            '#suffix' => '</div>',
-        ];
-
-        // Load the nested actions from the context.
-        $nested_actions = $this->getContextValue('actions');
-
-        // If no actions are provided, initialize an empty array.
-        if (!is_array($nested_actions)) {
-            $nested_actions = [];
+        if ($return_as_object) {
+            return AccessResult::allowedIfHasPermission($account, 'access content');
         }
 
-        // Render form elements for each nested action.
-        foreach ($nested_actions as $index => $action) {
-            $action_form = $action->buildConfigurationForm([], $form_state);
-            $form['actions'][$index] = $action_form;
-        }
-
-        // Use a select list for the "Add Action" button to choose from available actions.
-        $default_actions = $this->getDefaultRulesActions();
-        $options = [];
-        foreach ($default_actions as $action_id => $action_label) {
-            $options[$action_id] = $action_label;
-        }
-
-        $form['actions']['add_action'] = [
-            '#type' => 'select',
-            '#title' => $this->t('Add Action'),
-            '#options' => $options,
-            '#empty_option' => $this->t('- Select an action -'),
-            '#ajax' => [
-                'callback' => '::addActionAjaxCallback',
-                'wrapper' => 'actions-container',
-            ],
-        ];
-
-        return $form;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function submitConfigurationForm(array &$form, FormStateInterface $form_state)
-    {
-        // Process the submitted form values.
-        // ...
-
-        // Load the nested actions from the form state.
-        $nested_actions = $form_state->getValue('actions');
-
-        // Extract the settings for each nested action.
-        $actions_settings = [];
-        foreach ($nested_actions as $index => $action_id) {
-            $action = $this->getPlugin()->getContextValue('actions')->createInstance();
-            $action_form = $form['actions'][$index];
-            $action->submitConfigurationForm($action_form, $form_state);
-            $actions_settings[] = $action;
-        }
-
-        // Set the nested actions as the context value.
-        $this->setContextValue('actions', $actions_settings);
-    }
-
-    /**
-     * Submit callback for adding a new nested action.
-     */
-    public function addActionAjaxCallback(array &$form, FormStateInterface $form_state)
-    {
-        return $form['actions'];
-    }
-
-    /**
-     * Helper function to get a list of available default Rules actions.
-     *
-     * @return array
-     *   An array of default Rules actions where keys are action IDs and values are action labels.
-     */
-    protected function getDefaultRulesActions()
-    {
-        // Retrieve a list of default Rules actions.
-        // You can implement this function to fetch the available default actions dynamically.
-        // You may use the RulesActionManager service to get the list of available actions.
-        // For example, you can use \Drupal::service('plugin.manager.rules_action')->getDefinitions();
-        // to get all available action plugin definitions and then extract their IDs and labels.
-        // Replace the following code with the actual implementation to get the list of actions.
-
-        // For example:
-        return [
-            'rules_send_email' => 'Send email',
-            'rules_create_entity' => 'Create entity',
-            // Add more action IDs and labels as needed.
-        ];
+        return $account->hasPermission('access content');
     }
 }

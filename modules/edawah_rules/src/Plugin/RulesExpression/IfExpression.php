@@ -1,31 +1,66 @@
 <?php
 
-// namespace Drupal\edawah_rules\Plugin\RulesExpression;
+// namespace Drupal\rules\Plugin\RulesExpression;
+namespace Drupal\edawah_rules\RulesExpression;
 
-// use Drupal\rules\Core\RulesConditionBase;
-// use Drupal\rules\Engine\ExecutionStateInterface;
 
-// /**
-//  * Provides an 'IF' condition.
-//  *
-//  * @RulesExpression(
-//  *   id = "your_module_if_condition",
-//  *   label = @Translation("IF"),
-//  * )
-//  */
-// class IfCondition extends RulesConditionBase {
+use Drupal\rules\Context\ExecutionStateInterface;
+use Drupal\rules\Engine\ConditionExpressionContainer;
 
-//   /**
-//    * {@inheritdoc}
-//    */
-//   public function evaluate(ExecutionStateInterface $state) {
-//     // Implement the logic for your custom 'IF' condition here.
-//     // For example, check if a certain condition is met.
-//     if ($some_condition) {
-//       return TRUE;
-//     } else {
-//       return FALSE;
-//     }
-//   }
+/**
+ * Evaluates a group of conditions with a logical AND.
+ *
+ * @RulesExpression(
+ *   id = "edawah_rules_if",
+ *   label = @Translation("Edawah Condition set (IF)"),
+ *   form_class = "\Drupal\rules\Form\Expression\ConditionContainerForm"
+ * )
+ */
+class AndExpression extends ConditionExpressionContainer
+{
 
-// }
+    /**
+     * Returns whether there is a configured condition.
+     *
+     * @return bool
+     *   TRUE if there are no conditions, FALSE otherwise.
+     */
+    public function isEmpty()
+    {
+        return empty($this->conditions);
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function evaluate(ExecutionStateInterface $state)
+    {
+        // Use the iterator to ensure the conditions are sorted.
+        foreach ($this as $condition) {
+            /* @var \Drupal\rules\Engine\ExpressionInterface $condition */
+            if (!$condition->executeWithState($state)) {
+                $this->rulesDebugLogger->info('%label evaluated to %result.', [
+                    '%label' => $this->getLabel(),
+                    '%result' => 'FALSE',
+                ]);
+                return FALSE;
+            }
+        }
+        $this->rulesDebugLogger->info('%label evaluated to %result.', [
+            '%label' => $this->getLabel(),
+            '%result' => 'TRUE',
+        ]);
+        // An empty AND should return FALSE. Otherwise, if all conditions evaluate
+        // to TRUE we return TRUE.
+        return !empty($this->conditions);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function allowsMetadataAssertions()
+    {
+        // If the AND is not negated, all child-expressions must be executed - thus
+        // assertions can be added it.
+        return !$this->isNegated();
+    }
+}

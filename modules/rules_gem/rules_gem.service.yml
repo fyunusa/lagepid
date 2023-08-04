@@ -1,0 +1,5 @@
+services:
+  rules_gem.form_subscriber:
+    class: Drupal\rules_gem\RulesGemFormSubscriber
+    tags:
+      - { name: event_subscriber }

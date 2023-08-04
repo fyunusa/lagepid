@@ -11,7 +11,8 @@ use Drupal\rules\Context\ContextProviderTrait;
 /**
  * Base class for rules actions.
  */
-abstract class RulesActionBase extends ContextAwarePluginBase implements RulesActionInterface {
+abstract class RulesActionBase extends ContextAwarePluginBase implements RulesActionInterface
+{
 
   use ContextProviderTrait;
   use ExecutablePluginTrait;
@@ -27,11 +28,11 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
   /**
    * {@inheritdoc}
    */
-  public function getContextValue($name) {
+  public function getContextValue($name)
+  {
     try {
       return parent::getContextValue($name);
-    }
-    catch (ContextException $e) {
+    } catch (ContextException $e) {
       // Catch the undocumented exception thrown when no context value is set
       // for a required context.
       // @todo Remove once https://www.drupal.org/node/2677162 is fixed.
@@ -44,14 +45,16 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
   /**
    * {@inheritdoc}
    */
-  public function refineContextDefinitions(array $selected_data) {
+  public function refineContextDefinitions(array $selected_data)
+  {
     // Do not refine anything by default.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function assertMetadata(array $selected_data) {
+  public function assertMetadata(array $selected_data)
+  {
     // Nothing to assert by default.
     return [];
   }
@@ -61,7 +64,8 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
    *
    * @todo this documentation is not actually inherited from any interface.
    */
-  public function getConfiguration() {
+  public function getConfiguration()
+  {
     return [
       'id' => $this->getPluginId(),
     ] + $this->configuration;
@@ -72,7 +76,8 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
    *
    * @todo this documentation is not actually inherited from any interface.
    */
-  public function setConfiguration(array $configuration) {
+  public function setConfiguration(array $configuration)
+  {
     $this->configuration = $configuration + $this->defaultConfiguration();
     return $this;
   }
@@ -83,7 +88,8 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
    * @todo this documentation is not actually inherited from any interface.
    * Do we need this empty implementation?
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration()
+  {
     return [];
   }
 
@@ -93,7 +99,8 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
    * @todo this documentation is not actually inherited from any interface.
    * Do we need this empty implementation?
    */
-  public function calculateDependencies() {
+  public function calculateDependencies()
+  {
     return [];
   }
 
@@ -103,14 +110,16 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
    * @todo this documentation is not actually inherited from any interface.
    * Do we need this empty implementation?
    */
-  public function executeMultiple(array $objects) {
+  public function executeMultiple(array $objects)
+  {
     // @todo Remove this once it is removed from the interface.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function autoSaveContext() {
+  public function autoSaveContext()
+  {
     // Per default no context parameters will be auto saved.
     return [];
   }
@@ -118,7 +127,8 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
   /**
    * {@inheritdoc}
    */
-  public function access($object, AccountInterface $account = NULL, $return_as_object = FALSE) {
+  public function access($object, AccountInterface $account = NULL, $return_as_object = FALSE)
+  {
     // Just deny access per default for now.
     if ($return_as_object) {
       return AccessResult::forbidden();
@@ -129,7 +139,8 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
   /**
    * {@inheritdoc}
    */
-  public function execute() {
+  public function execute()
+  {
     // Provide a reasonable default implementation that calls doExecute() while
     // passing the defined context as arguments.
     $args = [];
@@ -138,5 +149,4 @@ abstract class RulesActionBase extends ContextAwarePluginBase implements RulesAc
     }
     call_user_func_array([$this, 'doExecute'], $args);
   }
-
 }

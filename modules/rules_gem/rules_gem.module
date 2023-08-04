@@ -1,0 +1,57 @@
+<?php
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\rules\Context\ContextDefinition;
+use Drupal\rules\Core\RulesConditionInterface;
+use Drupal\rules\Core\RulesConditionBase;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_help().
+ */
+function rules_gem_help($route_name, RouteMatchInterface $route_match)
+{
+    switch ($route_name) {
+        case 'help.page.rules_gem':
+            return '<p>' . t('Provides a custom IF Action with nested actions for Rules.') . '</p>';
+    }
+}
+
+/**
+ * Implements hook_rules_action_info().
+ */
+function rules_gem_rules_action_info()
+{
+    return [
+        'rules_gem_if_action' => [
+            'label' => t('Custom IF Action'),
+            'group' => t('Custom'),
+            'context' => [
+                'node' => ContextDefinition::create('entity:node')
+                    ->setLabel(t('Node')),
+            ],
+        ],
+    ];
+}
+
+/**
+ * Custom IF Action callback function.
+ */
+function rules_gem_if_action(NodeInterface $node)
+{
+    if ($node->bundle() === 'article') {
+        // Execute nested actions here.
+        rules_gem_execute_nested_actions();
+    }
+}
+
+/**
+ * Custom function to execute nested actions.
+ */
+function rules_gem_execute_nested_actions()
+{
+    // Implement your nested actions here.
+    // For simplicity, let's just print a message as an example.
+    drupal_set_message(t('Nested action executed successfully!'));
+}

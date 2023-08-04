@@ -12,6 +12,7 @@ use Drupal\Core\Plugin\Context\ContextDefinitionInterface;
  */
 class RulesIfActionsContainer implements ContextInterface, ContextDefinitionInterface
 {
+
     use TypedDataTrait;
 
     /**

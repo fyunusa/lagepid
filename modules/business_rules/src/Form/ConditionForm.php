@@ -5,6 +5,7 @@ namespace Drupal\business_rules\Form;
 use Drupal\business_rules\BusinessRulesItemObject;
 use Drupal\business_rules\Entity\Action;
 use Drupal\business_rules\Entity\Condition;
+
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
@@ -14,7 +15,8 @@ use Drupal\Core\Url;
  *
  * @package Drupal\business_rules\Form
  */
-class ConditionForm extends ItemForm {
+class ConditionForm extends ItemForm
+{
 
   /**
    * We don't want to use the same wait two times for an item.
@@ -26,7 +28,8 @@ class ConditionForm extends ItemForm {
   /**
    * {@inheritdoc}
    */
-  public function getItemManager() {
+  public function getItemManager()
+  {
     $container = \Drupal::getContainer();
 
     return $container->get('plugin.manager.business_rules.condition');
@@ -35,7 +38,8 @@ class ConditionForm extends ItemForm {
   /**
    * {@inheritdoc}
    */
-  public function form(array $form, FormStateInterface $form_state) {
+  public function form(array $form, FormStateInterface $form_state)
+  {
     $form = parent::form($form, $form_state);
 
     if (!$this->entity->isNew()) {
@@ -74,8 +78,7 @@ class ConditionForm extends ItemForm {
         $form['additional_fields']['fail']['items'] = $this->formItems($form, $form_state, 'fail');
 
         $form['#attached']['library'][] = 'business_rules/style';
-      }
-      else {
+      } else {
         $form['no_items'] = [
           '#type'        => 'details',
           '#title'       => $this->t('No items available'),
@@ -100,7 +103,8 @@ class ConditionForm extends ItemForm {
    * @return bool
    *   TRUE|FALSE.
    */
-  private function isPartOfConditionSet(Condition $condition) {
+  private function isPartOfConditionSet(Condition $condition)
+  {
     $conditions = Condition::loadMultipleByType('logical_and');
     $conditions = array_merge($conditions, Condition::loadMultipleByType('logical_or'));
 
@@ -136,7 +140,8 @@ class ConditionForm extends ItemForm {
    * @return array
    *   The render array.
    */
-  public function formItems(array $form, FormStateInterface $form_state, $items_type) {
+  public function formItems(array $form, FormStateInterface $form_state, $items_type)
+  {
 
     /** @var \Drupal\business_rules\Entity\Condition $condition */
     $condition = $this->entity;
@@ -147,8 +152,7 @@ class ConditionForm extends ItemForm {
     $label_plural = $this->t('Items');
     if ($items_type == 'success') {
       $items = $condition->getSuccessItems();
-    }
-    elseif ($items_type == 'fail') {
+    } elseif ($items_type == 'fail') {
       $items = $condition->getFailItems();
     }
 
@@ -189,8 +193,7 @@ class ConditionForm extends ItemForm {
 
         if ($value->getType() == 'condition') {
           $item = Condition::load($value->getId());
-        }
-        elseif ($value->getType() == 'action') {
+        } elseif ($value->getType() == 'action') {
           $item = Action::load($value->getId());
         }
 
@@ -206,13 +209,15 @@ class ConditionForm extends ItemForm {
 
           $operations['#links']['remove'] = [
             'title'  => $this->t('Remove'),
-            'url'    => Url::fromRoute($route_remove_item, [
-              'condition_id'        => $condition->id(),
-              'condition_item_type' => $items_type,
-              'item_type'           => $value->getType(),
-              'item_id'             => $item->id(),
-              'method'              => 'nojs',
-            ],
+            'url'    => Url::fromRoute(
+              $route_remove_item,
+              [
+                'condition_id'        => $condition->id(),
+                'condition_item_type' => $items_type,
+                'item_type'           => $value->getType(),
+                'item_id'             => $item->id(),
+                'method'              => 'nojs',
+              ],
               [
                 'attributes' => [
                   'class' => ['use-ajax'],
@@ -263,7 +268,6 @@ class ConditionForm extends ItemForm {
               '#value' => $value->getType(),
             ],
           ];
-
         }
       }
     }
@@ -306,7 +310,8 @@ class ConditionForm extends ItemForm {
    * @return int
    *   The generated weight
    */
-  private function generateItemWeight($settings_type, $weight) {
+  private function generateItemWeight($settings_type, $weight)
+  {
 
     if (!isset($this->usedWeight[$settings_type])) {
       $this->usedWeight[$settings_type][] = $weight;
@@ -318,8 +323,7 @@ class ConditionForm extends ItemForm {
       $this->usedWeight[$settings_type][] = $weight;
 
       return $weight;
-    }
-    else {
+    } else {
       $weight++;
 
       return $this->generateItemWeight($settings_type, $weight);
@@ -331,7 +335,8 @@ class ConditionForm extends ItemForm {
    *
    * {@inheritdoc}
    */
-  public function save(array $form, FormStateInterface $form_state) {
+  public function save(array $form, FormStateInterface $form_state)
+  {
     /** @var \Drupal\business_rules\Entity\Condition $condition */
     $condition = $this->entity;
     if (!$condition->isNew()) {
@@ -372,5 +377,4 @@ class ConditionForm extends ItemForm {
 
     return parent::save($form, $form_state);
   }
-
 }
